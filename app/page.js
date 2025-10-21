@@ -1,103 +1,123 @@
-import Image from "next/image";
+"use client";
+import { useState } from "react";
+import BillSummary from "../components/BillSummary";
+import CalculatorForm from "../components/CalculatorForm";
 
-export default function Home() {
+// Configuration for utilities (used to populate the initial state if desired,
+// but the CalculatorForm handles the dynamic adding now, so we remove the old hardcoded list.)
+
+// Initial state for the entire application (Must use YYYY-MM format for the month input)
+const getInitialState = (defaultName = "Admin User") => ({
+  // FIX 1: Change month format to YYYY-MM for the input type="month"
+  month: new Date().toISOString().slice(0, 7),
+  madeBy: defaultName,
+  totalMembers: 4,
+
+  // FIX 2: START WITH AN EMPTY UTILITIES ARRAY
+  // The CalculatorForm will manage adding utilities dynamically via its internal state.
+  utilities: [],
+
+  // We can also remove the 'utilities' array from here, but since the CalculatorForm
+  // manages its own state now, we just ensure we pass the correct functions.
+  // NOTE: If you stick to the old hardcoded list, the CalculatorForm MUST NOT be the one
+  // I fixed in the previous step. We'll proceed assuming you're using the DYNAMIC FORM.
+});
+
+export default function BillCalculator() {
+  // We will let CalculatorForm manage its own formData and only worry about the summary here.
+  const [summary, setSummary] = useState(null);
+
+  // NOTE: Your provided code relies on the parent managing formData, but the
+  // CalculatorForm provided earlier manages formData internally.
+  // Let's assume the CalculatorForm now manages its state internally
+  // and sends the data back via the calculateBill function.
+
+  // A dummy formData state is needed if you want to pass setSummary to the child
+  // which is not directly used for rendering here, but for demonstration:
+  const [formData, setFormData] = useState(getInitialState());
+
+  // FIX 3: Update calculateBill to accept data, as the CalculatorForm component
+  // needs to send its internal state (formData) when the button is clicked.
+  // (This ensures separation of concerns.)
+  const calculateBill = (formDataFromForm) => {
+    // Use the data received from the CalculatorForm
+    const dataToCalculate = formDataFromForm;
+
+    // 1. Calculate Total Bill
+    const totalBill = dataToCalculate.utilities.reduce(
+      (sum, util) => sum + util.totalAmount,
+      0
+    );
+
+    // Ensure totalMembers is at least 1 to avoid division by zero
+    const members =
+      dataToCalculate.totalMembers > 0 ? dataToCalculate.totalMembers : 1;
+
+    // 2. Calculate Bill Per Person
+    const billPerPerson = totalBill / members;
+
+    // 3. Prepare Summary Data
+    const summaryData = {
+      month: dataToCalculate.month || new Date().toISOString().slice(0, 7),
+      issueTime: new Date().toLocaleString(),
+      madeBy: dataToCalculate.madeBy,
+      totalMembers: members,
+      totalBill: totalBill.toFixed(2),
+      billPerPerson: billPerPerson.toFixed(2),
+
+      // Filter out utilities with zero cost for a cleaner summary
+      billDetails: dataToCalculate.utilities
+        .filter((u) => u.totalAmount > 0)
+        .map((u) => ({
+          utility: u.label,
+          totalAmount: u.totalAmount,
+          sources: u.sources.map((s) => ({
+            meterName: s.meterName,
+            amount: s.amount,
+          })),
+        })),
+    };
+
+    if (totalBill === 0) {
+      alert(
+        "The total bill is ৳0. Please enter amounts for meters before calculating."
+      );
+    }
+
+    setSummary(summaryData);
+  };
+
+  const clearSummary = () => {
+    setSummary(null);
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="container mx-auto p-8">
+      <h1 className="text-3xl  lg:text-5xl font-semibold text-base-content mb-8 underline text-center ">
+        Bill Manager
+      </h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <CalculatorForm
+            calculateBill={calculateBill}
+            setSummary={setSummary}
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* === SUMMARY SECTION (1/3 width) === */}
+        <div className="lg:col-span-1">
+          {summary ? (
+            <BillSummary summary={summary} clearSummary={clearSummary} />
+          ) : (
+            <div className="h-full flex items-center justify-center p-6 bg-yellow-50 rounded-xl shadow-md border-l-4 border-yellow-400">
+              <p className="text-lg text-gray-600 font-medium">
+                Click **CALCULATE** to view the breakdown and save the bill.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
