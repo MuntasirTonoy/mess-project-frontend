@@ -114,7 +114,7 @@ export default function DashboardBillsPage() {
           {bills.map((bill) => (
             <div
               key={bill._id}
-              className="card bg-base-300 border border-base-300 rounded-xl shadow-md hover:shadow-xl transition-all duration-300"
+              className="card bg-base-300 border border-base-300 rounded-md hover:ring-2 ring-offset-3 ring-offset-base-300 ring-green-300 transition-all duration-300"
             >
               <div className="card-body space-y-3">
                 {/* Header */}
