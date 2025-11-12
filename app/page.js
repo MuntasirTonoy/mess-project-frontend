@@ -110,7 +110,7 @@ export default function BillCalculator() {
           {summary ? (
             <BillSummary summary={summary} clearSummary={clearSummary} />
           ) : (
-            <div className="h-full flex items-center justify-center p-6 bg-yellow-50 rounded-xl shadow-md border-l-4 border-yellow-400">
+            <div className="h-full flex items-center justify-center p-6 bg-base-300 rounded-xl shadow-md ">
               <p className="text-lg text-gray-600 font-medium">
                 Click **CALCULATE** to view the breakdown and save the bill.
               </p>
