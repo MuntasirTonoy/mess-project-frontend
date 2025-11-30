@@ -3,6 +3,9 @@ import { useState } from "react";
 
 const SELECTABLE_UTILITIES = ["Electric Bill", "Water Bill", "Extra", "Others"];
 
+// Helper to check utility type
+const isElectric = (label) => label === "Electric Bill";
+
 const getInitialState = (defaultName = "Admin User") => ({
   month: new Date().toISOString().slice(0, 7),
   madeBy: defaultName,
@@ -24,6 +27,15 @@ export default function CalculatorForm({ calculateBill, setSummary }) {
     const totalAmount = newSources.reduce((sum, s) => sum + s.amount, 0);
     newUtilities[utilityIndex].sources = newSources;
     newUtilities[utilityIndex].totalAmount = totalAmount;
+    setFormData({ ...formData, utilities: newUtilities });
+  };
+
+  // For non-electric utilities: single amount field
+  const handleUtilityAmountChange = (utilityIndex, value) => {
+    const newUtilities = [...formData.utilities];
+    const amount = Number(value) >= 0 ? Number(value) : 0;
+    newUtilities[utilityIndex].sources = [{ meterName: "Total", amount }];
+    newUtilities[utilityIndex].totalAmount = amount;
     setFormData({ ...formData, utilities: newUtilities });
   };
 
@@ -57,7 +69,9 @@ export default function CalculatorForm({ calculateBill, setSummary }) {
     const newUtility = {
       name: utilityName.toLowerCase().replace(/\s/g, "_"),
       label: utilityName,
-      sources: [{ meterName: "Meter 1", amount: 0 }],
+      sources: isElectric(utilityName)
+        ? [{ meterName: "Meter 1", amount: 0 }]
+        : [{ meterName: "Total", amount: 0 }],
       totalAmount: 0,
     };
     setFormData({
@@ -180,45 +194,66 @@ export default function CalculatorForm({ calculateBill, setSummary }) {
             <h3 className="text-md text-white bg-green-500 py-1 px-4 rounded-full font-semibold">
               {utility.label}
             </h3>
-            <div className="form-control w-40">
-              <label className="label">
-                <span className="label-text text-sm">Sources</span>
-              </label>
-              <select
-                value={utility.sources.length}
-                onChange={(e) =>
-                  handleUtilitySourcesChange(uIndex, e.target.value)
-                }
-                className="select select-bordered select-sm"
-              >
-                {[...Array(5).keys()].map((i) => (
-                  <option key={i + 1}>{i + 1}</option>
-                ))}
-              </select>
-            </div>
+            {isElectric(utility.label) && (
+              <div className="form-control w-40">
+                <label className="label">
+                  <span className="label-text text-sm">Meters</span>
+                </label>
+                <select
+                  value={utility.sources.length}
+                  onChange={(e) =>
+                    handleUtilitySourcesChange(uIndex, e.target.value)
+                  }
+                  className="select select-bordered select-sm"
+                >
+                  {[...Array(3).keys()].map((i) => (
+                    <option key={i + 1}>{i + 1}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
-          {/* Sources */}
-          <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-4">
-            {utility.sources.map((source, sIndex) => (
-              <div key={sIndex} className="form-control">
+          {/* Sources / Amount Inputs */}
+          {isElectric(utility.label) ? (
+            <div className="grid md:grid-cols-3 sm:grid-cols-2 gap-4">
+              {utility.sources.map((source, sIndex) => (
+                <div key={sIndex} className="form-control">
+                  <label className="label">
+                    <span className="label-text">
+                      {source.meterName} Amount (৳)
+                    </span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={source.amount}
+                    onChange={(e) =>
+                      handleSourceAmountChange(uIndex, sIndex, e.target.value)
+                    }
+                    className="input input-bordered"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              <div className="form-control">
                 <label className="label">
-                  <span className="label-text">
-                    {source.meterName} Amount (৳)
-                  </span>
+                  <span className="label-text">Amount (৳)</span>
                 </label>
                 <input
                   type="number"
                   min="0"
-                  value={source.amount}
+                  value={utility.totalAmount}
                   onChange={(e) =>
-                    handleSourceAmountChange(uIndex, sIndex, e.target.value)
+                    handleUtilityAmountChange(uIndex, e.target.value)
                   }
                   className="input input-bordered"
                 />
               </div>
-            ))}
-          </div>
+            </div>
+          )}
 
           <div className="mt-4 border-t pt-3 text-right text-lg font-bold text-secondary">
             Total: ৳{utility.totalAmount.toFixed(2)}

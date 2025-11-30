@@ -2,6 +2,8 @@ import "./globals.css";
 import { Poppins } from "next/font/google";
 import Header from "../components/Header";
 import Footer from "@/components/Footer";
+import { ThemeProvider } from "../context/ThemeContext";
+import ThemeApplicator from "../components/ThemeApplicator";
 
 export const metadata = {
   title: "Hostel Bill Calculator",
@@ -18,11 +20,15 @@ const poppins = Poppins({
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={poppins.variable} data-theme="light">
+    <html lang="en" className={poppins.variable}>
       <body>
-        <Header />
-        <main className="min-h-screen pt-16">{children}</main>
-        <Footer />
+        <ThemeProvider>
+          <ThemeApplicator>
+            <Header />
+            <main className="min-h-screen pt-16">{children}</main>
+            <Footer />
+          </ThemeApplicator>
+        </ThemeProvider>
       </body>
     </html>
   );

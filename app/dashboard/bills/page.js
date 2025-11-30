@@ -18,6 +18,9 @@ export default function DashboardBillsPage() {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Add modal state for showing bill details
+  const [selectedBill, setSelectedBill] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch Bills
   useEffect(() => {
@@ -57,7 +60,8 @@ export default function DashboardBillsPage() {
       if (!response.ok) {
         throw new Error(`Failed to delete bill. Status: ${response.status}`);
       }
-      setBills(bills.filter((bill) => bill._id !== billId));
+      // Use functional update to ensure latest state is used
+      setBills((prev) => prev.filter((bill) => bill._id !== billId));
       alert(`✅ Bill for ${billMonth} deleted successfully!`);
     } catch (err) {
       console.error("Delete error:", err);
@@ -134,7 +138,11 @@ export default function DashboardBillsPage() {
             return (
               <div
                 key={bill._id}
-                className="card bg-base-300 border border-base-300 rounded-md hover:ring-2 ring-offset-3 ring-offset-base-300 ring-green-300 transition-all duration-300"
+                className="card bg-base-300 border border-base-300 rounded-md hover:ring-2 ring-offset-3 ring-offset-base-300 ring-green-300 transition-all duration-300 cursor-pointer"
+                onClick={() => {
+                  setSelectedBill(bill);
+                  setIsModalOpen(true);
+                }}
               >
                 <div className="card-body space-y-2 p-3 sm:p-4">
                   {/* Reduced padding (p-3) and spacing (space-y-2) for smaller screens */}
@@ -170,8 +178,12 @@ export default function DashboardBillsPage() {
                       {" "}
                       {/* Reduced margin */}
                       <button
-                        onClick={() => handleDelete(bill._id, formattedMonth)}
-                        className="btn btn-outline btn-error w-full btn-xs sm:btn-sm flex items-center justify-center gap-1 font-semibold" // Used btn-xs (extra small) for mobile, sm:btn-sm for tablet/desktop
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(bill._id, formattedMonth);
+                        }}
+                        className="btn btn-outline btn-error w-full btn-xs sm:btn-sm flex items-center justify-center gap-1 font-semibold"
                       >
                         <FaTrashAlt />
                         Delete Bill
@@ -182,6 +194,99 @@ export default function DashboardBillsPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Modal for Bill Details */}
+      {isModalOpen && selectedBill && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsModalOpen(false)}
+          ></div>
+
+          {/* Modal Content */}
+          <div className="relative z-10 w-[95%] sm:w-[85%] lg:w-[60%] bg-base-100 rounded-xl shadow-2xl max-h-[85vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">
+                  🧾 Bill Details — {format(parse(selectedBill.month, "yyyy-MM", new Date()), "MMMM yyyy")}
+                </h2>
+                <button
+                  className="btn btn-sm btn-outline"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+
+              {/* Header Info */}
+              <div className="overflow-x-auto">
+                <table className="table table-sm">
+                  <tbody>
+                    <tr>
+                      <td className="font-semibold w-40">👤 Calculated By</td>
+                      <td>{selectedBill.madeBy}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-semibold">👥 Total Members</td>
+                      <td>{selectedBill.totalMembers}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-semibold">🕒 Issued</td>
+                      <td className="text-xs opacity-70">
+                        {(() => {
+                          const issue = parseISO(selectedBill.issueTime);
+                          return `${format(issue, "MMM do, yyyy")} at ${format(issue, "h:mm a")}`;
+                        })()}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Utilities Breakdown */}
+              <div className="mt-4 space-y-3">
+                <h3 className="text-lg font-semibold text-base-content/80 flex items-center gap-2">
+                  Utilities Breakdown
+                </h3>
+
+                {selectedBill.billDetails?.length > 0 ? (
+                  selectedBill.billDetails.map((detail, index) => (
+                    <div
+                      key={index}
+                      className="card bg-base-200 rounded-md p-4 shadow-sm hover:shadow-md transition"
+                    >
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-sm text-white bg-green-500 py-1 px-4 rounded-full font-semibold">
+                          {detail.utility}
+                        </h4>
+                        <span className="badge badge-lg badge-secondary text-base px-3">
+                          ৳{Number(detail.totalAmount).toFixed(2)}
+                        </span>
+                      </div>
+                      <ul className="mt-2 text-sm font-semibold opacity-80 space-y-1">
+                        {detail.sources?.map((source, sIndex) => (
+                          <li key={sIndex}>• {source.meterName}: ৳{Number(source.amount).toFixed(2)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))
+                ) : (
+                  <div className="alert alert-warning text-sm">
+                    <span>No utilities with costs to display.</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Totals */}
+              <div className="bg-base-200 rounded-md p-5 shadow mt-5">
+                <h3 className="text-lg font-bold">Total Bill: ৳{Number(selectedBill.totalBill).toFixed(2)}</h3>
+                <h3 className="text-xl font-bold mt-2">Bill per person: ৳{Number(selectedBill.billPerPerson).toFixed(2)}</h3>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
