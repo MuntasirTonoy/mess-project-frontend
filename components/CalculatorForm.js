@@ -239,7 +239,7 @@ export default function CalculatorForm({ calculateBill, setSummary }) {
               ></path>
             </svg>
             <span className="text-sm sm:text-base">
-              Click "Add Utility" to start adding bills.
+              Click &quot;Add Utility&quot; to start adding bills.
             </span>
           </div>
         )}
