@@ -2,43 +2,14 @@
 import { useState } from "react";
 import BillSummary from "../components/BillSummary";
 import CalculatorForm from "../components/CalculatorForm";
+import Swal from "sweetalert2";
 
 // Configuration for utilities (used to populate the initial state if desired,
 // but the CalculatorForm handles the dynamic adding now, so we remove the old hardcoded list.)
 
-// Initial state for the entire application (Must use YYYY-MM format for the month input)
-const getInitialState = (defaultName = "Admin User") => ({
-  // FIX 1: Change month format to YYYY-MM for the input type="month"
-  month: new Date().toISOString().slice(0, 7),
-  madeBy: defaultName,
-  totalMembers: 4,
-
-  // FIX 2: START WITH AN EMPTY UTILITIES ARRAY
-  // The CalculatorForm will manage adding utilities dynamically via its internal state.
-  utilities: [],
-
-  // We can also remove the 'utilities' array from here, but since the CalculatorForm
-  // manages its own state now, we just ensure we pass the correct functions.
-  // NOTE: If you stick to the old hardcoded list, the CalculatorForm MUST NOT be the one
-  // I fixed in the previous step. We'll proceed assuming you're using the DYNAMIC FORM.
-});
-
 export default function BillCalculator() {
-  // We will let CalculatorForm manage its own formData and only worry about the summary here.
   const [summary, setSummary] = useState(null);
-
-  // NOTE: Your provided code relies on the parent managing formData, but the
-  // CalculatorForm provided earlier manages formData internally.
-  // Let's assume the CalculatorForm now manages its state internally
-  // and sends the data back via the calculateBill function.
-
-  // A dummy formData state is needed if you want to pass setSummary to the child
-  // which is not directly used for rendering here, but for demonstration:
-  const [formData, setFormData] = useState(getInitialState());
-
-  // FIX 3: Update calculateBill to accept data, as the CalculatorForm component
-  // needs to send its internal state (formData) when the button is clicked.
-  // (This ensures separation of concerns.)
+  // A dummy formData state is NOT needed as CalculatorForm manages it internally.
   const calculateBill = (formDataFromForm) => {
     // Use the data received from the CalculatorForm
     const dataToCalculate = formDataFromForm;
@@ -46,7 +17,7 @@ export default function BillCalculator() {
     // 1. Calculate Total Bill
     const totalBill = dataToCalculate.utilities.reduce(
       (sum, util) => sum + util.totalAmount,
-      0
+      0,
     );
 
     // Ensure totalMembers is at least 1 to avoid division by zero
@@ -79,9 +50,11 @@ export default function BillCalculator() {
     };
 
     if (totalBill === 0) {
-      alert(
-        "The total bill is ৳0. Please enter amounts for meters before calculating."
-      );
+      Swal.fire({
+        title: "Empty Bill",
+        text: "The total bill is ৳0. Please enter amounts for meters before calculating.",
+        icon: "warning",
+      });
     }
 
     setSummary(summaryData);
@@ -92,30 +65,63 @@ export default function BillCalculator() {
   };
 
   return (
-    <div className="container mx-auto p-8">
-      <h1 className="text-3xl  lg:text-5xl font-semibold text-base-content mb-8 underline text-center ">
-        Bill Manager
-      </h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <CalculatorForm
-            calculateBill={calculateBill}
-            setSummary={setSummary}
-          />
+    <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200">
+      <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        {/* Page Title with enhanced styling */}
+        <div className="text-center mb-10 sm:mb-12">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mb-3 animate-fade-in">
+            Bill Manager
+          </h1>
+          <p className="text-base-content/70 text-sm sm:text-base max-w-2xl mx-auto">
+            Calculate and manage your utility bills with ease
+          </p>
         </div>
 
-        {/* === SUMMARY SECTION (1/3 width) === */}
-        <div className="lg:col-span-1">
-          {summary ? (
-            <BillSummary summary={summary} clearSummary={clearSummary} />
-          ) : (
-            <div className="h-full flex items-center justify-center p-6 bg-base-300 rounded-xl shadow-md ">
-              <p className="text-lg text-gray-600 font-medium">
-                Click **CALCULATE** to view the breakdown and save the bill.
-              </p>
-            </div>
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          {/* Calculator Form Section */}
+          <div className="lg:col-span-2">
+            <CalculatorForm
+              calculateBill={calculateBill}
+              setSummary={setSummary}
+            />
+          </div>
+
+          {/* Summary Section */}
+          <div className="lg:col-span-1">
+            {summary ? (
+              <BillSummary summary={summary} clearSummary={clearSummary} />
+            ) : (
+              <div className="sticky top-24 h-fit">
+                <div className="card bg-gradient-to-br from-base-300 to-base-200 border border-base-content/10 backdrop-blur-sm">
+                  <div className="card-body items-center text-center p-8 sm:p-10">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-10 w-10 sm:h-12 sm:w-12 text-primary"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-semibold text-base-content mb-2">
+                      Ready to Calculate
+                    </h3>
+                    <p className="text-sm sm:text-base text-base-content/60">
+                      Enter your utility information and calculate the total
+                      bill amount per person
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

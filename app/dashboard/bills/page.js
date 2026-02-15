@@ -7,6 +7,7 @@ import { MdErrorOutline } from "react-icons/md";
 
 // ⭐️ Import date-fns utilities ⭐️
 import { format, parseISO, parse } from "date-fns";
+import Swal from "sweetalert2";
 
 // Mock User Context (Replace with real auth context later)
 const MOCK_CURRENT_USER = {
@@ -35,7 +36,7 @@ export default function DashboardBillsPage() {
       } catch (err) {
         console.error("Fetch error:", err);
         setError(
-          "Could not connect to the backend API. Please ensure the server is running on http://localhost:5000."
+          "Could not connect to the backend API. Please ensure the server is running on http://localhost:5000.",
         );
       } finally {
         setLoading(false);
@@ -46,12 +47,19 @@ export default function DashboardBillsPage() {
 
   // Delete Handler
   const handleDelete = async (billId, billMonth) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete the bill for ${billMonth}? This action cannot be undone.`
-      )
-    )
-      return;
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: `Do you want to delete the bill for ${billMonth}? This action cannot be undone.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+      background: "var(--bg-base-300)",
+      color: "var(--text-base-content)",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/bills/${billId}`, {
@@ -62,10 +70,16 @@ export default function DashboardBillsPage() {
       }
       // Use functional update to ensure latest state is used
       setBills((prev) => prev.filter((bill) => bill._id !== billId));
-      alert(`✅ Bill for ${billMonth} deleted successfully!`);
+      Swal.fire({
+        title: "Deleted!",
+        text: `Bill for ${billMonth} has been deleted.`,
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
     } catch (err) {
       console.error("Delete error:", err);
-      alert("❌ Error deleting bill: " + err.message);
+      Swal.fire("Error!", "Error deleting bill: " + err.message, "error");
     }
   };
 
@@ -87,208 +101,290 @@ export default function DashboardBillsPage() {
     );
 
   return (
-    <div className="container mx-auto p-4 sm:p-8">
-      {/* Page Title */}
-      <h1 className="text-2xl md:text-3xl font-extrabold mb-6 sm:mb-8 flex items-center gap-2 sm:gap-3">
-        {/* Decreased font size for mobile, reduced gap, reduced bottom margin */}
-        <FaMoneyBillWave />
-        Bill History Dashboard
-      </h1>
-
-      {/* No Bills */}
-      {bills.length === 0 ? (
-        <div className="p-6 sm:p-10 text-center bg-base-200 rounded-xl shadow-inner">
-          <p className="text-lg sm:text-xl opacity-80 mb-4">
-            No bills saved yet. Start calculating!
+    <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200">
+      <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        {/* Page Title - Enhanced */}
+        <div className="mb-10 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent flex items-center gap-3 mb-2">
+            <FaMoneyBillWave className="text-primary" />
+            Bill History Dashboard
+          </h1>
+          <p className="text-base-content/60 text-sm sm:text-base ml-12">
+            View and manage all your saved bills
           </p>
-          <Link
-            href="/"
-            className="btn btn-primary btn-lg font-bold gap-2 mt-2"
-          >
-            <FaCalculator />
-            Go to Calculator
-          </Link>
         </div>
-      ) : (
-        // Bill Cards Grid
-        // grid-cols-2: Mobile/Tablet (2 cards)
-        // lg:grid-cols-3: Desktop (3 cards)
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Reduced gap for smaller screens */}
-          {bills.map((bill) => {
-            // ------------------------------------------------
-            // ⭐️ date-fns Logic for Formatting ⭐️
-            // ------------------------------------------------
 
-            // Assuming bill.month is in "YYYY-MM" format (e.g., "2024-02").
-            const dateForMonth = parse(bill.month, "yyyy-MM", new Date());
+        {/* No Bills - Enhanced Empty State */}
+        {bills.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="card bg-gradient-to-br from-base-100 to-base-200 border border-base-content/10 max-w-lg">
+              <div className="card-body items-center text-center p-8 sm:p-12">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                  <FaCalculator className="text-5xl sm:text-6xl text-primary" />
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-base-content mb-3">
+                  No Bills Yet
+                </h3>
+                <p className="text-base-content/70 mb-6 text-sm sm:text-base">
+                  Start calculating your utility bills to see them here
+                </p>
+                <Link
+                  href="/"
+                  className="btn btn-primary btn-lg gap-2 transition-all"
+                >
+                  <FaCalculator />
+                  Go to Calculator
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Bill Cards Grid
+          // grid-cols-1: Mobile (1 card)
+          // sm:grid-cols-2: Tablet (2 cards)
+          // lg:grid-cols-3: Desktop (3 cards)
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {/* Reduced gap for smaller screens */}
+            {bills.map((bill) => {
+              // ------------------------------------------------
+              // ⭐️ date-fns Logic for Formatting ⭐️
+              // ------------------------------------------------
 
-            // Format the month to "Long Month Name YYYY" (e.g., "February 2024")
-            const formattedMonth = format(dateForMonth, "MMMM yyyy");
+              let formattedMonth = "Invalid Date";
+              try {
+                // Ensure we only take YYYY-MM even if YYYY-MM-DD is provided
+                const cleanMonth =
+                  bill.month && bill.month.length >= 7
+                    ? bill.month.substring(0, 7)
+                    : bill.month;
+                const dateForMonth = parse(cleanMonth, "yyyy-MM", new Date());
+                // Format the month to "Long Month Name YYYY" (e.g., "February 2024")
+                formattedMonth = format(dateForMonth, "MMMM yyyy");
+              } catch (error) {
+                console.error("Date parsing error for bill:", bill._id, error);
+                formattedMonth = bill.month; // Fallback to raw string
+              }
 
-            // Assuming bill.issueTime is an ISO 8601 string (common for MongoDB/APIs)
-            const issueDate = parseISO(bill.issueTime);
+              // Assuming bill.issueTime is an ISO 8601 string (common for MongoDB/APIs)
+              const issueDate = parseISO(bill.issueTime);
 
-            // Format the issue date/time
-            const issueDateString = format(issueDate, "MMM do, yyyy");
-            const issueTimeString = format(issueDate, "h:mm a");
+              // Format the issue date/time
+              const issueDateString = format(issueDate, "MMM do, yyyy");
+              const issueTimeString = format(issueDate, "h:mm a");
 
-            // ------------------------------------------------
+              // ------------------------------------------------
 
-            return (
-              <div
-                key={bill._id}
-                className="card bg-base-300 border border-base-300 rounded-md hover:ring-2 ring-offset-3 ring-offset-base-300 ring-green-300 transition-all duration-300 cursor-pointer"
-                onClick={() => {
-                  setSelectedBill(bill);
-                  setIsModalOpen(true);
-                }}
-              >
-                <div className="card-body space-y-2 p-3 sm:p-4">
-                  {/* Reduced padding (p-3) and spacing (space-y-2) for smaller screens */}
-                  {/* Header */}
-                  <h2 className="text-lg sm:text-xl font-bold flex items-center gap-1">
-                    {/* Reduced font size (text-lg) for mobile, reduced gap */}
-                    {formattedMonth} {/* 👈 date-fns output */}
-                  </h2>
-                  <div className="divider my-0.5"></div> {/* Reduced margin */}
-                  {/* Bill Totals */}
-                  <div className="space-y-0.5">
-                    {" "}
-                    {/* Reduced margin */}
-                    <p className="flex justify-between text-sm sm:text-base font-semibold">
-                      {/* Reduced font size for mobile */}
-                      <span>Total Bill:</span>
-                      <span>৳{bill.totalBill.toFixed(2)}</span>
-                    </p>
-                    <p className="flex justify-between text-base sm:text-lg font-bold">
-                      {/* Reduced font size for mobile */}
-                      <span>Per Person:</span>
-                      <span>৳{bill.billPerPerson.toFixed(2)}</span>
-                    </p>
-                  </div>
-                  {/* Timestamp */}
-                  <p className="text-xs opacity-60 border-t pt-1.5">
-                    {/* Reduced top padding */}
-                    <b>Issued :</b> {issueDateString} at {issueTimeString}
-                  </p>
-                  {/* Delete Button (bottom) */}
-                  {MOCK_CURRENT_USER.role === "admin" && (
-                    <div className="card-actions mt-2">
-                      {" "}
-                      {/* Reduced margin */}
+              return (
+                <div
+                  key={bill._id}
+                  className="card bg-gradient-to-br from-base-100 to-base-200 border border-base-content/10 hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
+                  onClick={() => {
+                    setSelectedBill(bill);
+                    setIsModalOpen(true);
+                  }}
+                >
+                  <div className="card-body p-4 sm:p-6 space-y-3">
+                    {/* Header with Badge */}
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="text-lg sm:text-xl font-bold text-base-content flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 text-primary"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        {formattedMonth}
+                      </h2>
+                    </div>
+
+                    <div className="divider my-1"></div>
+
+                    {/* Bill Amounts */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center bg-base-200/50 rounded-lg p-2">
+                        <span className="text-sm font-medium text-base-content/70">
+                          Total Bill:
+                        </span>
+                        <span className="font-bold text-primary">
+                          ৳{bill.totalBill.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center bg-success/10 rounded-lg p-2 border border-success/20">
+                        <span className="text-sm font-semibold text-base-content">
+                          Per Person:
+                        </span>
+                        <span className="text-lg font-bold text-success">
+                          ৳{bill.billPerPerson.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Timestamp */}
+                    <div className="flex items-center gap-2 text-xs text-base-content/60 pt-2 border-t border-base-content/10">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3 w-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span>
+                        {issueDateString} at {issueTimeString}
+                      </span>
+                    </div>
+
+                    {/* Delete Button */}
+                    {MOCK_CURRENT_USER.role === "admin" && (
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDelete(bill._id, formattedMonth);
                         }}
-                        className="btn btn-outline btn-error w-full btn-xs sm:btn-sm flex items-center justify-center gap-1 font-semibold"
+                        className="btn btn-outline btn-error btn-sm w-full gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <FaTrashAlt />
                         Delete Bill
                       </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Modal for Bill Details */}
+        {isModalOpen && selectedBill && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Overlay */}
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setIsModalOpen(false)}
+            ></div>
+
+            {/* Modal Content */}
+            <div className="relative z-10 w-[95%] sm:w-[85%] lg:w-[60%] bg-base-100 rounded-xl shadow-2xl max-h-[85vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold">
+                    🧾 Bill Details —{" "}
+                    {(() => {
+                      try {
+                        // Ensure we only take YYYY-MM even if YYYY-MM-DD is provided
+                        const cleanMonth =
+                          selectedBill.month && selectedBill.month.length >= 7
+                            ? selectedBill.month.substring(0, 7)
+                            : selectedBill.month;
+                        return format(
+                          parse(cleanMonth, "yyyy-MM", new Date()),
+                          "MMMM yyyy",
+                        );
+                      } catch (e) {
+                        return selectedBill.month;
+                      }
+                    })()}
+                  </h2>
+                  <button
+                    className="btn btn-sm btn-outline"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+
+                {/* Header Info */}
+                <div className="overflow-x-auto">
+                  <table className="table table-sm">
+                    <tbody>
+                      <tr>
+                        <td className="font-semibold w-40">👤 Calculated By</td>
+                        <td>{selectedBill.madeBy}</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">👥 Total Members</td>
+                        <td>{selectedBill.totalMembers}</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">🕒 Issued</td>
+                        <td className="text-xs opacity-70">
+                          {(() => {
+                            const issue = parseISO(selectedBill.issueTime);
+                            return `${format(issue, "MMM do, yyyy")} at ${format(issue, "h:mm a")}`;
+                          })()}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Utilities Breakdown */}
+                <div className="mt-4 space-y-3">
+                  <h3 className="text-lg font-semibold text-base-content/80 flex items-center gap-2">
+                    Utilities Breakdown
+                  </h3>
+
+                  {selectedBill.billDetails?.length > 0 ? (
+                    selectedBill.billDetails.map((detail, index) => (
+                      <div
+                        key={index}
+                        className="card bg-base-200 rounded-md p-4 shadow-sm hover:shadow-md transition"
+                      >
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-sm text-white bg-green-500 py-1 px-4 rounded-full font-semibold">
+                            {detail.utility}
+                          </h4>
+                          <span className="badge badge-lg badge-secondary text-base px-3">
+                            ৳{Number(detail.totalAmount).toFixed(2)}
+                          </span>
+                        </div>
+                        <ul className="mt-2 text-sm font-semibold opacity-80 space-y-1">
+                          {detail.sources?.map((source, sIndex) => (
+                            <li key={sIndex}>
+                              • {source.meterName}: ৳
+                              {Number(source.amount).toFixed(2)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="alert alert-warning text-sm">
+                      <span>No utilities with costs to display.</span>
                     </div>
                   )}
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
-      {/* Modal for Bill Details */}
-      {isModalOpen && selectedBill && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Overlay */}
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setIsModalOpen(false)}
-          ></div>
-
-          {/* Modal Content */}
-          <div className="relative z-10 w-[95%] sm:w-[85%] lg:w-[60%] bg-base-100 rounded-xl shadow-2xl max-h-[85vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold">
-                  🧾 Bill Details — {format(parse(selectedBill.month, "yyyy-MM", new Date()), "MMMM yyyy")}
-                </h2>
-                <button
-                  className="btn btn-sm btn-outline"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Close
-                </button>
-              </div>
-
-              {/* Header Info */}
-              <div className="overflow-x-auto">
-                <table className="table table-sm">
-                  <tbody>
-                    <tr>
-                      <td className="font-semibold w-40">👤 Calculated By</td>
-                      <td>{selectedBill.madeBy}</td>
-                    </tr>
-                    <tr>
-                      <td className="font-semibold">👥 Total Members</td>
-                      <td>{selectedBill.totalMembers}</td>
-                    </tr>
-                    <tr>
-                      <td className="font-semibold">🕒 Issued</td>
-                      <td className="text-xs opacity-70">
-                        {(() => {
-                          const issue = parseISO(selectedBill.issueTime);
-                          return `${format(issue, "MMM do, yyyy")} at ${format(issue, "h:mm a")}`;
-                        })()}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Utilities Breakdown */}
-              <div className="mt-4 space-y-3">
-                <h3 className="text-lg font-semibold text-base-content/80 flex items-center gap-2">
-                  Utilities Breakdown
-                </h3>
-
-                {selectedBill.billDetails?.length > 0 ? (
-                  selectedBill.billDetails.map((detail, index) => (
-                    <div
-                      key={index}
-                      className="card bg-base-200 rounded-md p-4 shadow-sm hover:shadow-md transition"
-                    >
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-sm text-white bg-green-500 py-1 px-4 rounded-full font-semibold">
-                          {detail.utility}
-                        </h4>
-                        <span className="badge badge-lg badge-secondary text-base px-3">
-                          ৳{Number(detail.totalAmount).toFixed(2)}
-                        </span>
-                      </div>
-                      <ul className="mt-2 text-sm font-semibold opacity-80 space-y-1">
-                        {detail.sources?.map((source, sIndex) => (
-                          <li key={sIndex}>• {source.meterName}: ৳{Number(source.amount).toFixed(2)}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))
-                ) : (
-                  <div className="alert alert-warning text-sm">
-                    <span>No utilities with costs to display.</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Totals */}
-              <div className="bg-base-200 rounded-md p-5 shadow mt-5">
-                <h3 className="text-lg font-bold">Total Bill: ৳{Number(selectedBill.totalBill).toFixed(2)}</h3>
-                <h3 className="text-xl font-bold mt-2">Bill per person: ৳{Number(selectedBill.billPerPerson).toFixed(2)}</h3>
+                {/* Totals */}
+                <div className="bg-base-200 rounded-md p-5 shadow mt-5">
+                  <h3 className="text-lg font-bold">
+                    Total Bill: ৳{Number(selectedBill.totalBill).toFixed(2)}
+                  </h3>
+                  <h3 className="text-xl font-bold mt-2">
+                    Bill per person: ৳
+                    {Number(selectedBill.billPerPerson).toFixed(2)}
+                  </h3>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

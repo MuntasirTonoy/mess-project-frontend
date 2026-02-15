@@ -1,2 +1,3 @@
-// Connects to your Express server running on port 5000
-export const API_BASE_URL = "https://mess-project-backend.vercel.app";
+// Connects to your Express server. Use env variable for production.
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
