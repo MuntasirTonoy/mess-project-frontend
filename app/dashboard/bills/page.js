@@ -57,6 +57,44 @@ export default function DashboardBillsPage() {
 
     if (!result.isConfirmed) return;
 
+    // PIN code verification
+    const { value: pin } = await Swal.fire({
+      title: "Enter Admin PIN",
+      input: "password",
+      inputLabel: "Please enter the admin PIN to confirm deletion",
+      inputPlaceholder: "Enter 4-digit PIN",
+      inputAttributes: {
+        maxlength: "4",
+        autocapitalize: "off",
+        autocorrect: "off",
+        style: "text-align: center; letter-spacing: 0.5em; font-size: 1.5rem;",
+      },
+      showCancelButton: true,
+      confirmButtonText: "Verify & Delete",
+      background: "var(--bg-base-300)",
+      color: "var(--text-base-content)",
+      inputValidator: (value) => {
+        if (!value) {
+          return "You need to enter the PIN!";
+        }
+      },
+    });
+
+    // If user cancelled the PIN prompt
+    if (pin === undefined) return;
+
+    // Check if the PIN is correct
+    if (pin !== "4242") {
+      Swal.fire({
+        title: "Wrong PIN!",
+        text: "The PIN you entered is incorrect. Deletion aborted.",
+        icon: "error",
+        background: "var(--bg-base-300)",
+        color: "var(--text-base-content)",
+      });
+      return;
+    }
+
     try {
       await axiosInstance.delete(`/api/bills/${billId}`);
       // Use functional update to ensure latest state is used
