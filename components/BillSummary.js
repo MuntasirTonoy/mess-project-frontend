@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { API_BASE_URL } from "../config/api";
+import axiosInstance from "../config/api";
 import { IoIosSave } from "react-icons/io";
 import { MdDeleteForever } from "react-icons/md";
 import { FaChartLine } from "react-icons/fa6";
@@ -29,13 +29,7 @@ export default function BillSummary({ summary, clearSummary }) {
     if (!summary) return;
     try {
       const dataToSave = prepareDataForSave(summary);
-      const response = await fetch(`${API_BASE_URL}/api/bills`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dataToSave),
-      });
-
-      if (!response.ok) throw new Error("Failed to save bill on the server.");
+      await axiosInstance.post("/api/bills", dataToSave);
 
       Swal.fire({
         title: "Success!",
@@ -50,7 +44,9 @@ export default function BillSummary({ summary, clearSummary }) {
       console.error("Save error:", error);
       Swal.fire({
         title: "Error!",
-        text: "Error saving bill: " + error.message,
+        text:
+          "Error saving bill: " +
+          (error.response?.data?.message || error.message),
         icon: "error",
       });
     }

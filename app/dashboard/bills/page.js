@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { API_BASE_URL } from "../../../config/api";
+import axiosInstance from "../../../config/api";
 import Link from "next/link";
 import { FaTrashAlt, FaMoneyBillWave, FaCalculator } from "react-icons/fa";
 import { MdErrorOutline } from "react-icons/md";
@@ -11,7 +11,7 @@ import Swal from "sweetalert2";
 
 // Mock User Context (Replace with real auth context later)
 const MOCK_CURRENT_USER = {
-  username: "Tony Stark",
+  username: "Tonoy",
   role: "admin", // Change to 'user' to test hidden delete button
 };
 
@@ -27,12 +27,8 @@ export default function DashboardBillsPage() {
   useEffect(() => {
     async function fetchBills() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/bills`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch bills. Status: ${response.status}`);
-        }
-        const data = await response.json();
-        setBills(data);
+        const response = await axiosInstance.get("/api/bills");
+        setBills(response.data);
       } catch (err) {
         console.error("Fetch error:", err);
         setError(
@@ -62,12 +58,7 @@ export default function DashboardBillsPage() {
     if (!result.isConfirmed) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/bills/${billId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to delete bill. Status: ${response.status}`);
-      }
+      await axiosInstance.delete(`/api/bills/${billId}`);
       // Use functional update to ensure latest state is used
       setBills((prev) => prev.filter((bill) => bill._id !== billId));
       Swal.fire({
@@ -140,39 +131,24 @@ export default function DashboardBillsPage() {
           </div>
         ) : (
           // Bill Cards Grid
-          // grid-cols-1: Mobile (1 card)
-          // sm:grid-cols-2: Tablet (2 cards)
-          // lg:grid-cols-3: Desktop (3 cards)
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {/* Reduced gap for smaller screens */}
             {bills.map((bill) => {
-              // ------------------------------------------------
-              // ⭐️ date-fns Logic for Formatting ⭐️
-              // ------------------------------------------------
-
               let formattedMonth = "Invalid Date";
               try {
-                // Ensure we only take YYYY-MM even if YYYY-MM-DD is provided
                 const cleanMonth =
                   bill.month && bill.month.length >= 7
                     ? bill.month.substring(0, 7)
                     : bill.month;
                 const dateForMonth = parse(cleanMonth, "yyyy-MM", new Date());
-                // Format the month to "Long Month Name YYYY" (e.g., "February 2024")
                 formattedMonth = format(dateForMonth, "MMMM yyyy");
               } catch (error) {
                 console.error("Date parsing error for bill:", bill._id, error);
-                formattedMonth = bill.month; // Fallback to raw string
+                formattedMonth = bill.month;
               }
 
-              // Assuming bill.issueTime is an ISO 8601 string (common for MongoDB/APIs)
               const issueDate = parseISO(bill.issueTime);
-
-              // Format the issue date/time
               const issueDateString = format(issueDate, "MMM do, yyyy");
               const issueTimeString = format(issueDate, "h:mm a");
-
-              // ------------------------------------------------
 
               return (
                 <div
@@ -184,7 +160,6 @@ export default function DashboardBillsPage() {
                   }}
                 >
                   <div className="card-body p-4 sm:p-6 space-y-3">
-                    {/* Header with Badge */}
                     <div className="flex items-start justify-between gap-2">
                       <h2 className="text-lg sm:text-xl font-bold text-base-content flex items-center gap-2">
                         <svg
@@ -207,7 +182,6 @@ export default function DashboardBillsPage() {
 
                     <div className="divider my-1"></div>
 
-                    {/* Bill Amounts */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-center bg-base-200/50 rounded-lg p-2">
                         <span className="text-sm font-medium text-base-content/70">
@@ -227,7 +201,6 @@ export default function DashboardBillsPage() {
                       </div>
                     </div>
 
-                    {/* Timestamp */}
                     <div className="flex items-center gap-2 text-xs text-base-content/60 pt-2 border-t border-base-content/10">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -248,7 +221,6 @@ export default function DashboardBillsPage() {
                       </span>
                     </div>
 
-                    {/* Delete Button */}
                     {MOCK_CURRENT_USER.role === "admin" && (
                       <button
                         type="button"
@@ -269,16 +241,13 @@ export default function DashboardBillsPage() {
           </div>
         )}
 
-        {/* Modal for Bill Details */}
         {isModalOpen && selectedBill && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Overlay */}
             <div
               className="absolute inset-0 bg-black/50"
               onClick={() => setIsModalOpen(false)}
             ></div>
 
-            {/* Modal Content */}
             <div className="relative z-10 w-[95%] sm:w-[85%] lg:w-[60%] bg-base-100 rounded-xl shadow-2xl max-h-[85vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -286,7 +255,6 @@ export default function DashboardBillsPage() {
                     🧾 Bill Details —{" "}
                     {(() => {
                       try {
-                        // Ensure we only take YYYY-MM even if YYYY-MM-DD is provided
                         const cleanMonth =
                           selectedBill.month && selectedBill.month.length >= 7
                             ? selectedBill.month.substring(0, 7)
@@ -308,7 +276,6 @@ export default function DashboardBillsPage() {
                   </button>
                 </div>
 
-                {/* Header Info */}
                 <div className="overflow-x-auto">
                   <table className="table table-sm">
                     <tbody>
@@ -333,7 +300,6 @@ export default function DashboardBillsPage() {
                   </table>
                 </div>
 
-                {/* Utilities Breakdown */}
                 <div className="mt-4 space-y-3">
                   <h3 className="text-lg font-semibold text-base-content/80 flex items-center gap-2">
                     Utilities Breakdown
@@ -370,7 +336,6 @@ export default function DashboardBillsPage() {
                   )}
                 </div>
 
-                {/* Totals */}
                 <div className="bg-base-200 rounded-md p-5 shadow mt-5">
                   <h3 className="text-lg font-bold">
                     Total Bill: ৳{Number(selectedBill.totalBill).toFixed(2)}
