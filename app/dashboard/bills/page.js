@@ -178,7 +178,7 @@ export default function DashboardBillsPage() {
         ) : (
           // Bill Cards Grid
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {bills.map((bill) => {
+            {bills.map((bill, index) => {
               let formattedMonth = "Invalid Date";
               try {
                 const cleanMonth =
