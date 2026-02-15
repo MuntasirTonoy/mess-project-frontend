@@ -37,6 +37,8 @@ export default function BillSummary({ summary, clearSummary }) {
         icon: "success",
         timer: 2000,
         showConfirmButton: false,
+        background: "#1d232a",
+        color: "#a6adbb",
       });
       clearSummary();
       router.push("/dashboard/bills");
@@ -48,6 +50,8 @@ export default function BillSummary({ summary, clearSummary }) {
           "Error saving bill: " +
           (error.response?.data?.message || error.message),
         icon: "error",
+        background: "#1d232a",
+        color: "#a6adbb",
       });
     }
   };

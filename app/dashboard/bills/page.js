@@ -51,8 +51,8 @@ export default function DashboardBillsPage() {
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Yes, delete it!",
-      background: "var(--bg-base-300)",
-      color: "var(--text-base-content)",
+      background: "#1d232a",
+      color: "#a6adbb",
     });
 
     if (!result.isConfirmed) return;
@@ -71,8 +71,8 @@ export default function DashboardBillsPage() {
       },
       showCancelButton: true,
       confirmButtonText: "Verify & Delete",
-      background: "var(--bg-base-300)",
-      color: "var(--text-base-content)",
+      background: "#1d232a",
+      color: "#a6adbb",
       inputValidator: (value) => {
         if (!value) {
           return "You need to enter the PIN!";
@@ -89,8 +89,8 @@ export default function DashboardBillsPage() {
         title: "Wrong PIN!",
         text: "The PIN you entered is incorrect. Deletion aborted.",
         icon: "error",
-        background: "var(--bg-base-300)",
-        color: "var(--text-base-content)",
+        background: "#1d232a",
+        color: "#a6adbb",
       });
       return;
     }
@@ -105,10 +105,18 @@ export default function DashboardBillsPage() {
         icon: "success",
         timer: 1500,
         showConfirmButton: false,
+        background: "#1d232a",
+        color: "#a6adbb",
       });
     } catch (err) {
       console.error("Delete error:", err);
-      Swal.fire("Error!", "Error deleting bill: " + err.message, "error");
+      Swal.fire({
+        title: "Error!",
+        text: "Error deleting bill: " + err.message,
+        icon: "error",
+        background: "#1d232a",
+        color: "#a6adbb",
+      });
     }
   };
 
