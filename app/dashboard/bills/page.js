@@ -142,11 +142,11 @@ export default function DashboardBillsPage() {
       <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {/* Page Title - Enhanced */}
         <div className="mb-10 sm:mb-12">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent flex items-center gap-3 mb-2">
-            <FaMoneyBillWave className="text-primary" />
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent flex items-center gap-3 mb-2 animate-slide-up">
+            <FaMoneyBillWave className="text-primary animate-float" />
             Bill History Dashboard
           </h1>
-          <p className="text-base-content/60 text-sm sm:text-base ml-12">
+          <p className="text-base-content/60 text-sm sm:text-base ml-12 animate-slide-up delay-100">
             View and manage all your saved bills
           </p>
         </div>
@@ -199,7 +199,7 @@ export default function DashboardBillsPage() {
               return (
                 <div
                   key={bill._id}
-                  className="card bg-gradient-to-br from-base-100 to-base-200 border border-base-content/10 hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
+                  className={`card bg-gradient-to-br from-base-100 to-base-200 border border-base-content/10 hover:scale-[1.02] transition-all duration-300 cursor-pointer group animate-scale-in delay-${((index % 5) + 1) * 100}`}
                   onClick={() => {
                     setSelectedBill(bill);
                     setIsModalOpen(true);

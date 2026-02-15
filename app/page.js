@@ -69,10 +69,10 @@ export default function BillCalculator() {
       <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {/* Page Title with enhanced styling */}
         <div className="text-center mb-10 sm:mb-12">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mb-3 animate-fade-in">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mb-3 animate-slide-up">
             Bill Manager
           </h1>
-          <p className="text-base-content/70 text-sm sm:text-base max-w-2xl mx-auto">
+          <p className="text-base-content/70 text-sm sm:text-base max-w-2xl mx-auto animate-slide-up delay-200">
             Calculate and manage your utility bills with ease
           </p>
         </div>
@@ -94,7 +94,7 @@ export default function BillCalculator() {
               <div className="sticky top-24 h-fit">
                 <div className="card bg-gradient-to-br from-base-300 to-base-200 border border-base-content/10 backdrop-blur-sm">
                   <div className="card-body items-center text-center p-8 sm:p-10">
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4 animate-float">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="h-10 w-10 sm:h-12 sm:w-12 text-primary"
@@ -110,10 +110,10 @@ export default function BillCalculator() {
                         />
                       </svg>
                     </div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-base-content mb-2">
+                    <h3 className="text-lg sm:text-xl font-semibold text-base-content mb-2 animate-fade-in delay-300">
                       Ready to Calculate
                     </h3>
-                    <p className="text-sm sm:text-base text-base-content/60">
+                    <p className="text-sm sm:text-base text-base-content/60 animate-fade-in delay-400">
                       Enter your utility information and calculate the total
                       bill amount per person
                     </p>
